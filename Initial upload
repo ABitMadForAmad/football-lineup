@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Lineup Builder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .field {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            padding-top: 56.25%; /* Aspect ratio 16:9 */
+            background: green;
+            border: 5px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .position {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: black;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .position.draggable {
+            cursor: grab;
+        }
+
+        .bench {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .substitute {
+            width: 60px;
+            height: 60px;
+            background: #ccc;
+            border: 2px solid #aaa;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .player-profile {
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+        }
+
+        .player-profile input {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .player-profile button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .player-profile button:hover {
+            background-color: #218838;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Football Lineup Builder</h1>
+        
+        <!-- Controls for Formation Selection -->
+        <div class="controls">
+            <label for="formation">Choose Formation:</label>
+            <select id="formation" onchange="changeFormation()">
+                <option value="4-4-2">4-4-2</option>
+                <option value="4-3-3">4-3-3</option>
+                <option value="3-5-2">3-5-2</option>
+                <option value="5-3-2">5-3-2</option>
+                <option value="4-2-3-1">4-2-3-1</option>
+                <option value="3-4-3">3-4-3</option>
+                <option value="4-5-1">4-5-1</option>
+                <option value="custom">Custom</option>
+            </select>
+        </div>
+
+        <!-- Field Area -->
+        <div class="field" id="field">
+            <!-- Default 4-4-2 formation positions -->
+            <div class="position draggable" style="top: 10%; left: 45%;">GK</div>
+            <div class="position draggable" style="top: 30%; left: 20%;">LB</div>
+            <div class="position draggable" style="top: 30%; left: 70%;">RB</div>
+            <div class="position draggable" style="top: 50%; left: 35%;">CB</div>
+            <div class="position draggable" style="top: 50%; left: 55%;">CB</div>
+            <div class="position draggable" style="top: 70%; left: 20%;">LM</div>
+            <div class="position draggable" style="top: 70%; left: 70%;">RM</div>
+            <div class="position draggable" style="top: 80%; left: 40%;">CM</div>
+            <div class="position draggable" style="top: 80%; left: 50%;">CM</div>
+            <div class="position draggable" style="bottom: 10%; left: 30%;">ST</div>
+            <div class="position draggable" style="bottom: 10%; left: 60%;">ST</div>
+        </div>
+
+        <!-- Substitutes Bench -->
+        <div class="bench">
+            <div class="substitute">Sub 1</div>
+            <div class="substitute">Sub 2</div>
+            <div class="substitute">Sub 3</div>
+            <div class="substitute">Sub 4</div>
+            <div class="substitute">Sub 5</div>
+            <div class="substitute">Sub 6</div>
+            <div class="substitute">Sub 7</div>
+        </div>
+
+        <!-- Player Profile Form -->
+        <div class="player-profile">
+            <h2>Player Profile</h2>
+            <label for="player-photo">Photo:</label>
+            <input type="file" id="player-photo">
+
+            <label for="player-name">Name:</label>
+            <input type="text" id="player-name" placeholder="Enter player name">
+
+            <label for="player-nickname">Nickname:</label>
+            <input type="text" id="player-nickname" placeholder="Enter nickname">
+
+            <label for="player-position">Primary Position:</label>
+            <input type="text" id="player-position" placeholder="Enter primary position">
+
+            <label for="player-other-positions">Other Positions:</label>
+            <input type="text" id="player-other-positions" placeholder="Enter other positions">
+
+            <button onclick="savePlayerProfile()">Save Profile</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to allow dragging and dropping
+        const positions = document.querySelectorAll('.position');
+        positions.forEach(pos => {
+            pos.addEventListener('dragstart', dragStart);
+            pos.addEventListener('dragend', dragEnd);
+        });
+
+        function dragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+            e.target.style.opacity = '0.5';
+        }
+
+        function dragEnd(e) {
+            e.target.style.opacity = '1';
+        }
+
+        // Save player profile to local storage
+        function savePlayerProfile() {
+            const photo = document.getElementById('player-photo').files[0];
+            const name = document.getElementById('player-name').value;
+            const nickname = document.getElementById('player-nickname').value;
+            const position = document.getElementById('player-position').value;
+            const otherPositions = document.getElementById('player-other-positions').value;
+
+            // Validation rules
+            if (!name || name.length > 75) {
+                alert('Player name is required and must be less than 75 characters.');
+                return;
+            }
+
+            if (nickname && nickname.length > 75) {
+                alert('Nickname must be less than 75 characters.');
+                return;
+            }
+
+            if (photo && !photo.type.startsWith('image/')) {
+                alert('Photo must be a valid image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const photoData = event.target.result;
+
+                const playerProfile = {
+                    photo: photoData || '',
+                    name,
+                    nickname,
+                    position,
+                    otherPositions
+                };
+
+                // Save to localStorage
+                let profiles = JSON.parse(localStorage.getItem('playerProfiles')) || [];
+                profiles.push(playerProfile);
+                localStorage.setItem('playerProfiles', JSON.stringify(profiles));
+
+                alert('Player profile saved successfully!');
+                console.log(playerProfile);
+            };
+
+            if (photo) {
+                reader.readAsDataURL(photo);
+            } else {
+                // Save profile without photo
+                const playerProfile = {
+                    photo: '',
+                    name,
+                    nickname,
+                    position,
+                    otherPositions
+                };
+
+                let profiles = JSON.parse(localStorage.getItem('playerProfiles')) || [];
+                profiles.push(playerProfile);
+                localStorage.setItem('playerProfiles', JSON.stringify(profiles));
+
+                alert('Player profile saved successfully!');
+                console.log(playerProfile);
+            }
+        }
+
+        // Function to change formation dynamically
+        function changeFormation() {
+            const formation = document.getElementById('formation').value;
+            const field = document.getElementById('field');
+            field.innerHTML = ''; // Clear the field
+
+            // Define positions for each formation
+            const formations = {
+                "4-4-2": [
+                    { top: '10%', left: '45%', label: 'GK' },
+                    { top: '30%', left: '20%', label: 'LB' },
+                    { top: '30%', left: '70%', label: 'RB' },
+                    { top: '50%', left: '35%', label: 'CB' },
+                    { top: '50%', left: '55%', label: 'CB' },
+                    { top: '70%', left: '20%', label: 'LM' },
+                    { top: '70%', left: '70%', label: 'RM' },
+                    { top: '80%', left: '40%', label: 'CM' },
+                    { top: '80%', left: '50%', label: 'CM' },
+                    { bottom: '10%', left: '30%', label: 'ST' },
+                    { bottom: '10%', left: '60%', label: 'ST' }
+                ],
+                "4-3-3": [
+                    { top: '10%', left: '45%', label: 'GK' },
+                    { top: '30%', left: '20%', label: 'LB' },
+                    { top: '30%', left: '70%', label: 'RB' },
+                    { top: '50%', left: '35%', label: 'CB' },
+                    { top: '50%', left: '55%', label: 'CB' },
+                    { top: '70%', left: '20%', label: 'LM' },
+                    { top: '70%', left: '70%', label: 'RM' },
+                    { top: '80%', left: '45%', label: 'CM' },
+                    { bottom: '10%', left: '25%', label: 'LW' },
+                    { bottom: '10%', left: '75%', label: 'RW' },
+                    { bottom: '10%', left: '50%', label: 'ST' }
+                ],
+                "custom": [] // Custom positions will allow drag-and-drop only
+            };
+
+            const selectedPositions = formations[formation] || formations['4-4-2'];
+            selectedPositions.forEach(pos => {
+                const positionDiv = document.createElement('div');
+                positionDiv.classList.add('position', 'draggable');
+                positionDiv.style.top = pos.top || '';
+                positionDiv.style.bottom = pos.bottom || '';
+                positionDiv.style.left = pos.left;
+                positionDiv.textContent = pos.label;
+                field.appendChild(positionDiv);
+            });
+
+            // Reapply draggable event listeners
+            const positions = document.querySelectorAll('.position');
+            positions.forEach(pos => {
+                pos.addEventListener('dragstart', dragStart);
+                pos.addEventListener('dragend', dragEnd);
+            });
+        }
+    </script>
+</body>
+</html>
